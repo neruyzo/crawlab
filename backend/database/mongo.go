@@ -7,6 +7,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
+	"crypto/tls"
 	"net"
 	"reflect"
 	"time"
@@ -65,6 +66,7 @@ func InitMongo() error {
 	var mongoUsername = viper.GetString("mongo.username")
 	var mongoPassword = viper.GetString("mongo.password")
 	var mongoAuth = viper.GetString("mongo.authSource")
+	var mongoTls = viper.GetString("mongo.tls")
 
 	if Session == nil {
 		var dialInfo mgo.DialInfo
@@ -89,6 +91,14 @@ func InitMongo() error {
 			dialInfo.Source = mongoAuth
 		}
 		bp := backoff.NewExponentialBackOff()
+
+		if mongoTls == "Y" {
+			tlsConfig := &tls.Config{}
+			dialInfo.DialServer = func(addr *ServerAddr) (net.Conn, error) {
+				return tls.Dial("tcp", addr.String(), tlsConfig)
+			}
+		}
+
 		var err error
 
 		err = backoff.Retry(func() error {
