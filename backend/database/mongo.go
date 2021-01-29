@@ -94,7 +94,7 @@ func InitMongo() error {
 		var err error
 		if mongoTls == "Y" {
 			tlsConfig := &tls.Config{}
-			dialInfo.DialServer = func(addr *ServerAddr) (net.Conn, error) {
+			dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
 				return tls.Dial("tcp", addr.String(), tlsConfig)
 			}
 		}
