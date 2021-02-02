@@ -10,6 +10,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/spf13/viper"
 	"net/url"
+	"crypto/tls"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -167,21 +168,35 @@ func (r *Redis) BRPop(collection string, timeout int) (string, error) {
 func NewRedisPool() *redis.Pool {
 	var address = viper.GetString("redis.address")
 	var port = viper.GetString("redis.port")
-	var database = viper.GetString("redis.database")
+	// var database = viper.GetString("redis.database")
 	var password = url.QueryEscape(viper.GetString("redis.password"))
+	// var redisTls = viper.GetString("redis.tls")
 
-	var redisUrl string
-	if password == "" {
-		redisUrl = "redis://" + address + ":" + port + "/" + database
-	} else {
-		redisUrl = "redis://x:" + password + "@" + address + ":" + port + "/" + database
+	// var redisUrl string
+	// if password == "" {
+	// 	redisUrl = "redis://" + address + ":" + port + "/" + database
+	// } else {
+	// 	redisUrl = "redis://x:" + password + "@" + address + ":" + port + "/" + database
+	// }
+	// log.Info("Tls redis " + redisTls)
+
+	redisTLSConfig := &tls.Config{
+		ServerName:         address,
+		InsecureSkipVerify: true,
+		MinVersion:         tls.VersionTLS12,
 	}
+
 	return &redis.Pool{
 		Dial: func() (conn redis.Conn, e error) {
-			return redis.DialURL(redisUrl,
+			return redis.Dial("tcp", address + ":" + port,
 				redis.DialConnectTimeout(time.Second*10),
 				redis.DialReadTimeout(time.Second*600),
 				redis.DialWriteTimeout(time.Second*10),
+				redis.DialDatabase(0),
+				redis.DialPassword(password),
+				redis.DialTLSSkipVerify(true),
+				redis.DialUseTLS(true),
+				redis.DialTLSConfig(redisTLSConfig),
 			)
 		},
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {

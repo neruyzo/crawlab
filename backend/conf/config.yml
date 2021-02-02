@@ -12,6 +12,7 @@ redis:
   address: localhost
   password: ""
   database: 1
+  tls: "N"
   port: 6379
 log:
   level: info

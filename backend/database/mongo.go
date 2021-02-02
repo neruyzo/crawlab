@@ -93,9 +93,15 @@ func InitMongo() error {
 		bp := backoff.NewExponentialBackOff()
 		var err error
 		if mongoTls == "Y" {
-			tlsConfig := &tls.Config{}
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: true,
+			}
 			dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-				return tls.Dial("tcp", addr.String(), tlsConfig)
+				conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+				if err != nil {
+					log.WithError(err).Warnf("tls.")
+				}
+				return conn, err
 			}
 		}
 
